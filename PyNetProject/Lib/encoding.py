@@ -3,6 +3,8 @@ from typing import Tuple, List, Dict, Optional
 from Lib.types import BitUtilities, EList
 from Lib.types import PyNetException
 
+from Lib.easserting import EAssert
+
 
 class _PyNetEncoder:
     def __init__(self, accepts_value, accepts_type_id,
@@ -75,7 +77,7 @@ class PyNetEncoderManager:
         return type_id, data
 
     @staticmethod
-    def __get_encoder_by_value(value):
+    def __get_encoder_by_value(value: any) -> _PyNetEncoder:
         ret = PyNetEncoderManager.ENCODERS.first_or_none(lambda q: q.accepts_value(value))
         if ret is None:
             raise PyNetException("Failed to find encoder for " + str(value))
@@ -86,3 +88,24 @@ class PyNetEncoderManager:
         type_id = encoder.to_type_id(value)
         data = encoder.to_data(value)
         return type_id, data
+
+    @staticmethod
+    def decode(type_id: str, data_bytes: bytes) -> Tuple[any, int]:
+        encoder = PyNetEncoderManager.__get_encoder_by_type_id(type_id)
+        value, used_bytes = PyNetEncoderManager.__decode_with_encoder(encoder, type_id, data_bytes)
+        return value, used_bytes
+
+    @staticmethod
+    def __get_encoder_by_type_id(type_id: str) -> _PyNetEncoder:
+        ret = PyNetEncoderManager.ENCODERS.first_or_none(lambda q: q.accepts_type_id(type_id))
+        if ret is None:
+            raise PyNetException("Failed to find encoder for type-id " + str(type_id))
+        return ret
+
+    @staticmethod
+    def __decode_with_encoder(encoder: _PyNetEncoder, type_id: str, data_bytes: bytes) -> Tuple[any, int]:
+        EAssert.is_true(encoder.accepts_type_id(type_id))
+        data_len = encoder.to_byte_len(type_id)
+        data = data_bytes[:data_len]
+        value = encoder.to_value(data)
+        return value, data_len

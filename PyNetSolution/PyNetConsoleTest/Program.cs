@@ -2,7 +2,7 @@
 using PyNet;
 using PyNet.Testing;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Starting listener");
 
 Receiver receiver = new("localhost", 7007);
 receiver.ListeningStarted += r => Console.WriteLine($"{r} listening started");
@@ -12,10 +12,15 @@ receiver.ClientDisconnected += (r, e) => Console.WriteLine($"{r} client {e.Clien
 receiver.MessageReceived += (r, cid, m) => Console.WriteLine($"{r} client {cid} got message {DictToString(m)}");
 receiver.Start();
 
-Thread.Sleep(100000);
+Console.WriteLine("Listener started");
+
+Console.WriteLine("Phase 1 : NET -> Python: Sending");
+
 
 Sender sender = new("localhost", 8008);
 sender.Send(new TestFullBody());
+
+Console.WriteLine("Phase 1 : NET -> Python: Sent");
 
 string DictToString(Dictionary<string, object?> dict)
 {
@@ -23,3 +28,4 @@ string DictToString(Dictionary<string, object?> dict)
   return ret;
 }
 
+Thread.Sleep(100000);
