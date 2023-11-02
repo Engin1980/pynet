@@ -11,9 +11,8 @@ class LogLevel(IntEnum):
     CRITICAL = 1,
     ERROR = 2,
     WARNING = 3,
-    MAIN = 4,
-    INFO = 5,
-    VERBOSE = 6
+    INFO = 4,
+    VERBOSE = 5
 
     @staticmethod
     def from_string(txt: str) -> 'LogLevel':
@@ -24,12 +23,12 @@ class LogLevel(IntEnum):
             ret = LogLevel.ERROR
         elif txt == "warning":
             ret = LogLevel.WARNING
-        elif txt == "main":
-            ret = LogLevel.MAIN
         elif txt == "info":
             ret = LogLevel.INFO
         elif txt == "verbose":
             ret = LogLevel.VERBOSE
+        elif txt == "debug":
+            ret = LogLevel.DEBUG
         else:
             raise Exception(f"Unknown log-level string '{txt}'")
         return ret

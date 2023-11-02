@@ -1,20 +1,17 @@
 from Lib.elogging import LogLevel
 from Lib.easserting import EAssert
+from Lib.events import Event
 import socket
-from Lib.types import PyNetException, AppException, BitUtilities, EList
+from Lib.etypes import PyNetException, AppException, BitUtilities, EList
 from Lib.typing import Optional, Dict, List
 from Lib.encoding import PyNetEncoderManager
 
 
 class Sender:
     RESPONSE_SIZE = 4
-    next_request_id = 1
 
-    def _log(self, level: LogLevel, msg: str) -> None:
-        # TODO resolve
-        print(f"LOG {level} : {msg}")
-        # if self._logger is not None:
-        #     self._logger.log(level, msg, sender=f"Sender {self.__host}:{self.__port}")
+    def __log(self, level: LogLevel, msg: str) -> None:
+        self.__on_log.invoke(self, level, msg)
 
     def __init__(self, host: str, port: int):
         EAssert.Argument.is_nonempty_string(host)
@@ -22,20 +19,20 @@ class Sender:
 
         self.__host = host
         self.__port = port
+        self.__on_log = Event(source=any, log_level=LogLevel, message=str)
 
-        self._log(LogLevel.MAIN, f"Sender over {host}:{port} created.")
+    @property
+    def on_log(self) -> Event:
+        return self.__on_log
 
-    def send_object(self, obj: any) -> int:
-        #TODO kontrola na typ, že je třída
+    def send_object(self, obj: any) -> None:
+        # TODO kontrola na typ, že je třída
         EAssert.Argument.is_true(hasattr(obj, "__dict__"), "Object with __dict_ expected")
         dictionary = vars(obj)
         return self.send_dict(dictionary)
 
-    def send_dict(self, dictionary: Dict) -> int:
+    def send_dict(self, dictionary: Dict) -> None:
         EAssert.Argument.is_not_none(dictionary)
-
-        dictionary["rid"] = Sender.next_request_id
-        Sender.next_request_id += 1
 
         try:
             (header, data) = self.__encode_message(dictionary)
@@ -44,7 +41,6 @@ class Sender:
 
         self.__send_via_port(header, data)
 
-        return dictionary["rid"]
 
     def __encode_message(self, dictionary: Dict) -> (str, bytes):
 
@@ -57,7 +53,7 @@ class Sender:
         for key in dictionary.keys():
             val = dictionary[key]
             (val_type, val_data) = PyNetEncoderManager.encode(val)
-            h.append(_KeyValue(key,val_type))
+            h.append(_KeyValue(key, val_type))
             d.append(val_data)
 
         header = ";".join(h.select(lambda q: f"{q.key}:{q.value}").to_list())
@@ -66,18 +62,18 @@ class Sender:
         return header, data
 
     def __send_via_port(self, header: str, data_bytes: bytearray):
-        socket = _ESocket(self.__host, self.__port)
+        sending_socket = _ESocket(self.__host, self.__port)
 
         header_bytes = BitUtilities.str_to_bytes(header)
         header_len = BitUtilities.int_to_bytes(len(header_bytes))
         data_len = BitUtilities.int_to_bytes(len(data_bytes))
 
-        socket.open()
-        socket.send(header_len)
-        socket.send(data_len)
-        socket.send(header_bytes)
-        socket.send(data_bytes)
-        socket.close()
+        sending_socket.open()
+        sending_socket.send(header_len)
+        sending_socket.send(data_len)
+        sending_socket.send(header_bytes)
+        sending_socket.send(data_bytes)
+        sending_socket.close()
 
 
 class _ESocket:
@@ -106,8 +102,9 @@ class _ESocket:
 
         self.__socket.sendall(byte_data)
 
+        #TODO del if not used
         # try:
-        #     result = self.__socket.recv(Sender.RESPONSE_SIZE)
+        #     _ = self.__socket.recv(Sender.RESPONSE_SIZE)
         # except Exception as e:
         #     raise PyNetException("Send-confirmation not received.", e)
 

@@ -1,8 +1,9 @@
 from enum import Enum, IntEnum
-from typing import List, Optional, Callable
 from Lib.easserting import EAssert
+from Lib.events import Event
+from Lib.elogging import LogLevel
 import struct
-
+from typing import List, Optional, Callable
 
 class EException(Exception):
     def __init__(self, message: str, cause: Exception = None):
@@ -43,12 +44,13 @@ class BitUtilities:
 
     @staticmethod
     def float_to_bytes(value: float) -> bytes:
-        ret = struct.pack('<f', value)
+        ret = struct.pack('<d', value)
         return ret
 
     @staticmethod
     def bytes_to_float(value: bytes) -> float:
-        ret = struct.unpack('<f', value)
+        ret = struct.unpack('<d', value)
+        ret = ret[0]
         return ret
 
     @staticmethod

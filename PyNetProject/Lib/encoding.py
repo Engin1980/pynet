@@ -1,7 +1,6 @@
 import re
 from typing import Tuple, List, Dict, Optional
-from Lib.types import BitUtilities, EList
-from Lib.types import PyNetException
+from Lib.etypes import BitUtilities, EList, PyNetException
 
 from Lib.easserting import EAssert
 
@@ -37,6 +36,14 @@ class PyNetEncoderManager:
             lambda q: BitUtilities.bytes_to_str(q)
         ),
         _PyNetEncoder(
+            lambda q: isinstance(q, bool),
+            lambda q: q == "b",
+            lambda q: "b",
+            lambda q: BitUtilities.bool_to_bytes(q),
+            lambda q: BitUtilities.bool_length(),
+            lambda q: BitUtilities.bytes_to_bool(q)
+        ),
+        _PyNetEncoder(
             lambda q: isinstance(q, int),
             lambda q: q == "i",
             lambda q: "i",
@@ -46,19 +53,11 @@ class PyNetEncoderManager:
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, float),
-            lambda q: q == "f",
-            lambda q: "f",
+            lambda q: q == "d",
+            lambda q: "d",
             lambda q: BitUtilities.float_to_bytes(q),
             lambda q: BitUtilities.float_length(),
             lambda q: BitUtilities.bytes_to_float(q)
-        ),
-        _PyNetEncoder(
-            lambda q: isinstance(q, bool),
-            lambda q: q == "b",
-            lambda q: "b",
-            lambda q: BitUtilities.bool_to_bytes(q),
-            lambda q: BitUtilities.bool_length(),
-            lambda q: BitUtilities.bytes_to_bool(q)
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, bytes),
