@@ -102,12 +102,6 @@ class _ESocket:
 
         self.__socket.sendall(byte_data)
 
-        #TODO del if not used
-        # try:
-        #     _ = self.__socket.recv(Sender.RESPONSE_SIZE)
-        # except Exception as e:
-        #     raise PyNetException("Send-confirmation not received.", e)
-
     @property
     def is_opened(self) -> bool:
         return self.__socket is not None

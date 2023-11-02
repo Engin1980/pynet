@@ -194,11 +194,6 @@ class _ConnectionReaderThread(threading.Thread):
         self.__log(LogLevel.VERBOSE, "Reading data")
         data_bytes = self.__read_out_byte_block(data_length)
 
-        self.__log(LogLevel.VERBOSE, "Sending response")
-        # send response:
-        # resp = b'0000'
-        # self.__conn.sendall(resp)
-
         self.__log(LogLevel.VERBOSE, "Decoding message")
         message = self.__expand_header_bytes_to_dictionary(header_bytes, data_bytes)
 
