@@ -34,10 +34,6 @@ namespace PyNet.Communication
 
       if (data != null)
         this.socket!.Send(data);
-
-      byte[] resp = new byte[RESPONSE_SIZE];
-      int read = this.socket!.Receive(resp);
-      EAssert.IsTrue(read == RESPONSE_SIZE);
     }
 
     public void Open()

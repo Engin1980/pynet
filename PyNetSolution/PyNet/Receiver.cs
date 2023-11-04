@@ -13,17 +13,16 @@ using System.Threading.Tasks;
 
 namespace PyNet
 {
-  public class Receiver
+  public class Receiver : IWithLog
   {
-    private enum ListenerState
-    {
-      Listening,
-      Aborting,
-      Stopped
-    }
-
     public class ClientDisconnectedEventArgs
     {
+      public int ClientId { get; private set; }
+
+      public Exception? Exception { get; private set; }
+
+      public bool IsOk { get => this.Exception == null; }
+
       public ClientDisconnectedEventArgs(int clientId)
       {
         ClientId = clientId;
@@ -35,12 +34,14 @@ namespace PyNet
         ClientId = clientId;
         Exception = exception;
       }
-
-      public int ClientId { get; private set; }
-      public Exception? Exception { get; private set; }
-      public bool IsOk { get => this.Exception == null; }
     }
 
+    private enum ListenerState
+    {
+      Listening,
+      Aborting,
+      Stopped
+    }
     #region Delegates
 
     /// <summary>
@@ -83,31 +84,32 @@ namespace PyNet
     /// </summary>
     public event ClientDisconnectedDelegate? ClientDisconnected;
     /// <summary>
-    /// Invoked on an incoming message data.
-    /// </summary>
-    public event MessageReceivedDelegate? MessageReceived;
-
-    /// <summary>
     /// Invoked when listening has started.
     /// </summary>
     /// <seealso cref="MeCoM.Receiving.Receiver.Start(int)"/>
     public event ReceiverDelegate? ListeningStarted;
+
     /// <summary>
     /// Invoked when listening has stopped.
     /// </summary>
     /// <seealso cref="MeCoM.Receiving.Receiver.StopWhenAble"/>
     public event ReceiverDelegate? ListeningStopped;
 
+    public event IWithLog.LogHandler? Log;
+
+    /// <summary>
+    /// Invoked on an incoming message data.
+    /// </summary>
+    public event MessageReceivedDelegate? MessageReceived;
     #endregion
 
 
+    private static int nextClientId = 1;
     private readonly List<Socket> clients = new();
     private Socket? listener = null;
     private int numberOfConcurentConnections = 10;
     private ListenerState state = ListenerState.Stopped;
     private Thread? thread = null;
-    private static int nextClientId = 1;
-
     /// <summary>
     /// Returns number of current clients.
     /// </summary>
@@ -120,8 +122,6 @@ namespace PyNet
     /// <summary>
     /// Check if the receiver is started and running.
     /// </summary>
-    /// <seealso cref="MeCoM.Receiving.Receiver.Start(int)"/>
-    /// <seealso cref="MeCoM.Receiving.Receiver.StopWhenAble"/>
     public bool IsRunning { get => this.state != ListenerState.Stopped; }
     /// <summary>
     /// Target host port number.
@@ -179,20 +179,39 @@ namespace PyNet
     /// <returns></returns>
     public override string ToString()
     {
-      return "Receiver_" + this.GetHashCode().ToString();
+      return $"Recv_{this.Host}:{this.Port}";
     }
 
     #region Private Methods
 
+    private static void EnsureClientIsEmpty(Socket socket)
+    {
+      byte[] buffer = new byte[1];
+      try
+      {
+        socket.Receive(buffer);
+        throw new ApplicationException("There some data left in the buffer after reading the whole message.");
+      }
+      catch
+      {
+        // this is valid situation here
+      }
+    }
+
     private Socket CreateAndBindListenerSocket()
     {
-      Console.WriteLine("Loopback hardly fixed here.");
+      Log?.Invoke(this, LogLevel.WARNING, "Loopback as forced host used.");
       IPAddress ipAddress = IPAddress.Loopback; // host.AddressList[0];
       IPEndPoint localEndPoint = new(ipAddress, this.Port);
 
       Socket ret = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       ret.Bind(localEndPoint);
       return ret;
+    }
+
+    private Dictionary<string, object?> CreateReceivedMessageDictionary(Dictionary<string, string> header, byte[] data)
+    {
+      throw new NotImplementedException();
     }
 
     private void DoListening()
@@ -227,20 +246,6 @@ namespace PyNet
       this.ListeningStopped?.Invoke(this);
     }
 
-    private void ReadOutClient(Socket socket, int clientId, out ClientDisconnectedEventArgs e)
-    {
-      try
-      {
-        ReceiverReader rr = new(socket, dt => RaiseMessageReceived(clientId, dt));
-        rr.ReadOutClient();
-        e = new ClientDisconnectedEventArgs(clientId);
-      }
-      catch (Exception ex)
-      {
-        e = new ClientDisconnectedEventArgs(clientId, ex);
-      }
-    }
-
     private void RaiseMessageReceived(int clientId, Dictionary<string, object?> msg)
     {
       ThreadStart ts = new(() => MessageReceived?.Invoke(this, clientId, msg));
@@ -248,11 +253,20 @@ namespace PyNet
       t.Start();
     }
 
-    private Dictionary<string, object?> CreateReceivedMessageDictionary(Dictionary<string, string> header, byte[] data)
+    private void ReadOutClient(Socket socket, int clientId, out ClientDisconnectedEventArgs e)
     {
-      throw new NotImplementedException();
+      try
+      {
+        ReceiverReader rr = new(socket, dt => RaiseMessageReceived(clientId, dt));
+        rr.ReadOutClient();
+        EnsureClientIsEmpty(socket);
+        e = new ClientDisconnectedEventArgs(clientId);
+      }
+      catch (Exception ex)
+      {
+        e = new ClientDisconnectedEventArgs(clientId, ex);
+      }
     }
-
     private void ShutdownAndCloseSocket(Socket? socket)
     {
       if (socket == null) return;

@@ -38,15 +38,7 @@ namespace PyNet.Encoding
         q => BitUtilities.Int.FromBytes(q)
         );
 
-      internal static PyNetEncoder<float> FloatEncoder = new(
-        q => q is float,
-        q => q == "f",
-        q => "f",
-        q => BitUtilities.Float.ToBytes(q),
-        q => BitUtilities.Float.ByteLength,
-        q => BitUtilities.Float.FromBytes(q)
-        );
-
+      // float cannot be sent; on Python side there is no way to distinquish which type should be sent
       internal static PyNetEncoder<double> DoubleEncoder = new(
         q => q is double,
         q => q == "d",

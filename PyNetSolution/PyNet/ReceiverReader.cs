@@ -46,17 +46,13 @@ namespace PyNet
 
     internal void ReadOutClient()
     {
-      while (true)
-      {
-        ReadIntro(out int headerLen, out int dataLen);
-        KeyValue<string, string>[] header = ReadHeader(headerLen);
-        byte[] data = ReadData(dataLen);
-        WriteResponse();
+      ReadIntro(out int headerLen, out int dataLen);
+      KeyValue<string, string>[] header = ReadHeader(headerLen);
+      byte[] data = ReadData(dataLen);
 
-        Dictionary<string, object?> message = CreateReceivedMessageDictionary(header, data);
+      Dictionary<string, object?> message = CreateReceivedMessageDictionary(header, data);
 
-        this.newMessage.Invoke(message);
-      }
+      this.newMessage.Invoke(message);
     }
 
     private Dictionary<string, object?> CreateReceivedMessageDictionary(KeyValue<string, string>[] header, byte[] data)
@@ -108,15 +104,6 @@ namespace PyNet
       len = socket.Receive(buffer);
       EAssert.IsTrue(len == INT_SIZE);
       dataLen = BitUtilities.Int.FromBytes(buffer);
-    }
-
-    private void WriteResponse()
-    {
-      const int RESPONSE_VALUE = 0;
-      const int RESPONSE_SIZE = 4;
-      byte[] response = BitConverter.GetBytes(RESPONSE_VALUE);
-      EAssert.IsTrue(RESPONSE_SIZE == response.Length);
-      socket.Send(response);
     }
   }
 }

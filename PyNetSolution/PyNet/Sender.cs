@@ -6,9 +6,14 @@ using System.Reflection;
 
 namespace PyNet
 {
-  public class Sender
+  public class Sender : IWithLog
   {
-    private static int nextRequestId = 0;
+    public event IWithLog.LogHandler? Log;
+
+    public string Host { get; private set; }
+
+    public int Port { get; private set; }
+
     public Sender(string host, int port)
     {
       EAssert.Argument.IsNonEmptyString(host, nameof(host));
@@ -17,22 +22,23 @@ namespace PyNet
       Host = host!;
       Port = port;
     }
-
-    public string Host { get; private set; }
-    public int Port { get; private set; }
-
-    public int Send(object obj)
+    public static Dictionary<string, object?> CreateDictionaryFromObject(object obj)
     {
-      EAssert.Argument.IsNotNull(obj, nameof(obj));
-      var dict = CreateDictionaryFromObject(obj);
-      int ret = Send(dict);
+      Dictionary<string, object?> ret = new();
+      Type type = obj.GetType();
+      type.GetProperties().ToList().ForEach(q => ret.Add(q.Name, q.GetValue(obj)));
       return ret;
     }
 
-    public int Send(Dictionary<string, object?> values)
+    public void Send(object obj)
     {
-      values["rid"] = nextRequestId++;
+      EAssert.Argument.IsNotNull(obj, nameof(obj));
+      var dict = CreateDictionaryFromObject(obj);
+      Send(dict);
+    }
 
+    public void Send(Dictionary<string, object?> values)
+    {
       string header;
       byte[] data;
       try
@@ -45,31 +51,6 @@ namespace PyNet
       }
 
       SendViaPort(header, data);
-
-      return (int)values["rid"]!;
-    }
-
-    private void SendViaPort(string header, byte[] dataBytes)
-    {
-      byte[] headerBytes = BitUtilities.String.ToBytes(header);
-      byte[] headerLen = BitUtilities.Int.ToBytes(headerBytes.Length);
-      byte[] dataLen = BitUtilities.Int.ToBytes(dataBytes.Length);
-
-      SocketSender ss = new SocketSender(this.Host, this.Port);
-      ss.Open();
-      ss.Send(headerLen);
-      ss.Send(dataLen);
-      ss.Send(headerBytes);
-      ss.Send(dataBytes);
-      ss.Close();
-    }
-
-    public static Dictionary<string, object?> CreateDictionaryFromObject(object obj)
-    {
-      Dictionary<string, object?> ret = new();
-      Type type = obj.GetType();
-      type.GetProperties().ToList().ForEach(q => ret.Add(q.Name, q.GetValue(obj)));
-      return ret;
     }
 
     internal static void EncodeMessage(Dictionary<string, object?> values, out string header, out byte[] data)
@@ -100,6 +81,25 @@ namespace PyNet
         curIndex += d[i].Length;
       }
       return ret;
+    }
+
+    private void SendViaPort(string header, byte[] dataBytes)
+    {
+      byte[] headerBytes = BitUtilities.String.ToBytes(header);
+      byte[] headerLen = BitUtilities.Int.ToBytes(headerBytes.Length);
+      byte[] dataLen = BitUtilities.Int.ToBytes(dataBytes.Length);
+
+      SocketSender ss = new(this.Host, this.Port);
+
+      byte[] buffer = new byte[headerLen.Length + dataLen.Length + headerBytes.Length + dataBytes.Length];
+      headerLen.CopyTo(buffer, 0);
+      dataLen.CopyTo(buffer, headerLen.Length);
+      headerBytes.CopyTo(buffer, headerLen.Length + dataLen.Length);
+      dataBytes.CopyTo(buffer, headerLen.Length + dataLen.Length + headerBytes.Length);
+
+      ss.Open();
+      ss.Send(buffer);
+      ss.Close();
     }
   }
 }
