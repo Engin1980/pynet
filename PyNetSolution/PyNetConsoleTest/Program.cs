@@ -63,7 +63,6 @@ public static class Program
       SendDict();
     });
 
-    ret.Clear();
     ret.Add(() =>
     {
       sourceDict.Clear();

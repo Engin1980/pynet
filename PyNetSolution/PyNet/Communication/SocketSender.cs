@@ -54,8 +54,7 @@ namespace PyNet.Communication
 
     private Socket CreateAndBindTransmitterSocket()
     {
-      Console.WriteLine("Socket only localhost demo.");
-      IPAddress ipAddress = IPAddress.Loopback;
+      IPAddress ipAddress = Utils.ConvertToIp(this.Host);
       IPEndPoint remoteEndPoint = new(ipAddress, this.Port);
 
       Socket ret = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);

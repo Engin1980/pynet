@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using PyNet.Communication;
 using PyNet.EAsserting;
 using PyNet.Encoding;
 using System;
@@ -200,8 +201,7 @@ namespace PyNet
 
     private Socket CreateAndBindListenerSocket()
     {
-      Log?.Invoke(this, LogLevel.WARNING, "Loopback as forced host used.");
-      IPAddress ipAddress = IPAddress.Loopback; // host.AddressList[0];
+      IPAddress ipAddress = Utils.ConvertToIp(this.Host);
       IPEndPoint localEndPoint = new(ipAddress, this.Port);
 
       Socket ret = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
