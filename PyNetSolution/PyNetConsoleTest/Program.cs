@@ -1,8 +1,9 @@
 ﻿using PyNet;
-using PyNet;
 using PyNet.Testing;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.IO.IsolatedStorage;
 
 public static class Program
 {
@@ -38,7 +39,52 @@ public static class Program
 
     ret.Add(() =>
     {
+      sourceDict.Clear();
+      sourceDict["matrix3D"] = new double[][][]{
+        new double[][]{
+          new double[]{-1.1, 2.2},
+        },
+        new double[][]{
+          new double[]{-3.3, 4.4}
+        },
+        new double[][]{
+          new double[]{-5.5, 6.6}
+        }
+        };
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
+      sourceDict["matrix2D"] = new double[][]{
+        new double[]{-1.1, 2.2},
+        new double[]{-3.3, 4.4},
+        new double[]{-5.5, 6.6},
+        };
+      SendDict();
+    });
+
+    //TODO move at the end when tested
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
+      sourceDict["doubles"] = new double[] { 1.1, -2.2 };
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
       sourceDict["value"] = -5;
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
+      sourceDict["value"] = -5;
+      sourceDict["doubles"] = new double[] { 1.1, -2.2 };
       SendDict();
     });
 
@@ -69,6 +115,8 @@ public static class Program
       sourceDict["bytes"] = new byte[] { 1, 2, 3, 4, 5, 211, 7, 128, 52, 12, 23 };
       SendDict();
     });
+
+
 
     return ret;
   }
@@ -133,9 +181,58 @@ public static class Program
       {
         if (Enumerable.SequenceEqual(byteA, byteB) == false) return false;
       }
-      else if (object.Equals(valA, valB) == false) return false;
+      else if (valA is double[] doubleA && valB is double[] doubleB)
+      {
+        if (Enumerable.SequenceEqual(doubleA, doubleB) == false) return false;
+      }
+      else if (valA is double[][] ddoubleA && valB is double[][] ddoubleB)
+      {
+        if (ddoubleA.Length != ddoubleB.Length) return false;
+        for (int i = 0; i < ddoubleA.Length; i++)
+          if (Enumerable.SequenceEqual(ddoubleA[i], ddoubleB[i]) == false) return false;
+      }
+      else if (valA is double[][][] dddoubleA && valB is double[][][] dddoubleB)
+      {
+        if (Are3DDoubleArraysEqual(dddoubleA, dddoubleB) == false) return false;
+      }
+      else
+      {
+        if (object.Equals(valA, valB) == false) return false;
+      }
     }
 
     return true;
+  }
+
+  private static bool Are3DDoubleArraysEqual(double[][][] array1, double[][][] array2)
+  {
+    double tolerance = 0;
+    if (array1.Length != array2.Length)
+      return false; // Different lengths in outermost arrays
+
+    for (int i = 0; i < array1.Length; i++)
+    {
+      if (array1[i].Length != array2[i].Length)
+        return false; // Different lengths in the middle arrays
+
+      for (int j = 0; j < array1[i].Length; j++)
+      {
+        if (array1[i][j].Length != array2[i][j].Length)
+          return false; // Different lengths in the innermost arrays
+
+        // Iterate through the innermost arrays
+        for (int k = 0; k < array1[i][j].Length; k++)
+        {
+          double value1 = array1[i][j][k];
+          double value2 = array2[i][j][k];
+
+          // Check if the values are within the specified tolerance
+          if (Math.Abs(value1 - value2) > tolerance)
+            return false; // Values differ
+        }
+      }
+    }
+
+    return true; // All elements are equal within the tolerance
   }
 }

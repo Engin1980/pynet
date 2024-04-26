@@ -1,7 +1,7 @@
 import re
 from typing import Tuple, List, Dict, Optional
 from Lib.etypes import BitUtilities, EList, PyNetException
-
+import numpy as np
 from Lib.easserting import EAssert
 
 
@@ -29,7 +29,7 @@ class PyNetEncoderManager:
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, str),
-            lambda q: re.search("s\\d+", q),
+            lambda q: re.search("^s\\d+", q),
             lambda q: "s" + str(len(q)),
             lambda q: BitUtilities.str_to_bytes(q),
             lambda q: int(q[1:]),
@@ -61,12 +61,40 @@ class PyNetEncoderManager:
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, bytes),
-            lambda q: re.search("b\\d+", q),
+            lambda q: re.search(r"^b\d+", q),
             lambda q: "b" + str(len(q)),
             lambda q: q,
             lambda q: int(q[1:]),
             lambda q: q
         ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, list) and all(isinstance(d, float) for d in q),
+            lambda q: re.search(r"^d\d+", q),
+            lambda q: "d" + str(len(q) * BitUtilities.float_length()),
+            lambda q: BitUtilities.list_to_bytes(q),
+            lambda q: int(q[1:]),
+            lambda q: BitUtilities.bytes_to_list(q)
+        ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 2,
+            lambda q: re.search(r"^mm\d+", q),
+            lambda q: "mm" + str(
+                np.array(q.shape).prod() * BitUtilities.float_length()
+                + 2 * BitUtilities.int_length()),
+            lambda q: BitUtilities.matrix2d_to_bytes(q),
+            lambda q: int(q[2:]),
+            lambda q: BitUtilities.bytes_to_matrix2d(q)
+        ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 3,
+            lambda q: re.search(r"^mmm\d+", q),
+            lambda q: "mmm" + str(
+                np.array(q.shape).prod() * BitUtilities.float_length()
+                + 3 * BitUtilities.int_length()),
+            lambda q: BitUtilities.matrix3d_to_bytes(q),
+            lambda q: int(q[3:]),
+            lambda q: BitUtilities.bytes_to_matrix3d(q)
+        )
     ])
 
     @staticmethod
