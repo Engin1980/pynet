@@ -1,17 +1,15 @@
-from Lib.elogging import LogLevel
-from Lib.easserting import EAssert
-from Lib.events import Event
+from lib.logging_factory import create_logger
+import logging
+from lib.easserting import EAssert
+from lib.events import Event
 import socket
-from Lib.etypes import PyNetException, AppException, BitUtilities, EList
-from Lib.typing import Optional, Dict, List
-from Lib.encoding import PyNetEncoderManager
+from lib.etypes import PyNetException, AppException, BitUtilities, EList
+from typing import Optional, Dict, List
+from lib.encoding import PyNetEncoderManager
 
 
 class Sender:
     RESPONSE_SIZE = 4
-
-    def __log(self, level: LogLevel, msg: str) -> None:
-        self.__on_log.invoke(self, level, msg)
 
     def __init__(self, host: str, port: int):
         EAssert.Argument.is_nonempty_string(host)
@@ -19,11 +17,7 @@ class Sender:
 
         self.__host = host
         self.__port = port
-        self.__on_log = Event(source=any, log_level=LogLevel, message=str)
-
-    @property
-    def on_log(self) -> Event:
-        return self.__on_log
+        self.__logger = create_logger(f"Sndr {host}:{port}")
 
     def send_object(self, obj: any) -> None:
         # TODO kontrola na typ, že je třída
@@ -93,7 +87,7 @@ class _ESocket:
             self.__socket.connect((self.__host, self.__port))
         except Exception as e:
             self.__socket = None
-            raise PyNetException("Unable to open connection.", e)
+            raise PyNetException(f"Unable to open connection to {self.__host}:{self.__port}.", e)
 
     def send(self, byte_data: bytes) -> None:
         if len(byte_data) == 0:
