@@ -23,7 +23,7 @@ namespace PyNet.Encoding
       public static PyNetEncoder<string> StringEncoder = new PyNetEncoder<string>(
         q => q is string,
         q => Regex.IsMatch(q, "^s\\d+"),
-        q => "s" + q.Length,
+        q => $"s{q.Length}",
         q => BitUtilities.String.ToBytes(q),
         q => int.Parse(q[1..]),
         q => BitUtilities.String.FromBytes(q)
@@ -60,7 +60,7 @@ namespace PyNet.Encoding
       internal static PyNetEncoder<byte[]> ByteArrayEncoder = new(
         q => q is byte[],
         q => Regex.IsMatch(q, "^b\\d+"),
-        q => "b" + q.Length,
+        q => $"b{q.Length}",
         q => q,
         q => int.Parse(q[1..]),
         q => q
@@ -69,7 +69,7 @@ namespace PyNet.Encoding
       internal static PyNetEncoder<double[]> DoubleArrayEncoder = new(
         q => q is double[],
         q => Regex.IsMatch(q, "^d\\d+"),
-        q => "d" + q.Length * BitUtilities.Double.ByteLength,
+        q => $"d{q.Length * BitUtilities.Double.ByteLength}",
         q => q.SelectMany(d => BitUtilities.Double.ToBytes(d)).ToArray(),
         q => int.Parse(q[1..]),
         q => Enumerable
@@ -81,7 +81,7 @@ namespace PyNet.Encoding
       internal static PyNetEncoder<double[][]> Matrix2DEncoder = new(
         q => q is double[][],
         q => Regex.IsMatch(q, "^mm\\d+"),
-        q => "mm" + q.Length * q[0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength,
+        q => $"mm{q.Length * q[0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength}",
         q =>
         {
           byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
@@ -125,7 +125,7 @@ namespace PyNet.Encoding
       internal static PyNetEncoder<double[][][]> Matrix3DEncoder = new(
         q => q is double[][][],
         q => Regex.IsMatch(q, "^mmm\\d+"),
-        q => "mmm" + q.Length * q[0].Length * q[0][0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength,
+        q => $"mmm{q.Length * q[0].Length * q[0][0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength}",
         q =>
         {
           byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
