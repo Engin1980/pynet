@@ -20,8 +20,8 @@ class Event(object):
     def add_listener(self, handler):
         params = inspect.signature(handler).parameters
         valid = True
-        argnames = set(n for n in params.keys())
-        if argnames != self._argnames:
+        arg_names = set(n for n in params.keys())
+        if arg_names != self._argnames:
             valid = False
         else:
             for p in params.values():

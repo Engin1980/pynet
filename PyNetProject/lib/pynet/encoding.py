@@ -1,8 +1,10 @@
 import re
-from typing import Tuple, List, Dict, Optional
-from Lib.etypes import BitUtilities, EList, PyNetException
+from typing import Tuple
+from lib.pynet.bitutilities import BitUtilities
+from lib.esystem.elist import EList
+from lib.pynet.exceptions import PyNetException
 import numpy as np
-from Lib.easserting import EAssert
+from lib.esystem.easserting import EAssert
 
 
 class _PyNetEncoder:

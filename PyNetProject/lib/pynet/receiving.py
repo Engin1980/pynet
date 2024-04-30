@@ -1,9 +1,9 @@
-from lib.easserting import EAssert
-import logging
-from lib.logging_factory import create_logger
-from lib.encoding import PyNetEncoderManager
-from lib.events import Event
-from lib.etypes import BitUtilities, AppException
+from lib.esystem.easserting import EAssert
+from lib.esystem.logging_factory import create_logger
+from lib.pynet.encoding import PyNetEncoderManager
+from lib.esystem.events import Event
+from lib.pynet.bitutilities import  BitUtilities
+from lib.pynet.exceptions import  PyNetException
 from typing import Tuple, Optional
 import threading
 import socket
@@ -93,7 +93,7 @@ class _ListenerThread(threading.Thread):
         try:
             self.__socket.bind((self.__parent.host, self.__parent.port))
         except Exception as ex:
-            raise AppException(f"Failed to open receiver at {self.__parent.host}:{self.__parent.port}.", ex)
+            raise PyNetException(f"Failed to open receiver at {self.__parent.host}:{self.__parent.port}.", ex)
         self.__logger.info("Port bound")
         self.__state = _ListenerThread.STATE_OFF
 
@@ -170,7 +170,7 @@ class _ConnectionReaderThread(threading.Thread):
             block_length = min(remaining_bytes, _ListenerThread.BUFFER_SIZE)
             block = self.__conn.recv(block_length)
             if len(block) < block_length:
-                raise AppException("Connection contains no data. Mismatch?")
+                raise PyNetException("Connection contains no data. Mismatch?")
             start_index = target_length - remaining_bytes
             data[start_index:start_index + block_length] = block
             remaining_bytes -= block_length

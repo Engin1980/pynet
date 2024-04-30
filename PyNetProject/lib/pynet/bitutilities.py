@@ -1,35 +1,7 @@
-from enum import Enum, IntEnum
-from Lib.easserting import EAssert
-from Lib.events import Event
-from Lib.elogging import LogLevel
-import struct
-from typing import List, Optional, Callable
+from lib.esystem.easserting import EAssert
 import numpy as np
-
-
-class EException(Exception):
-    def __init__(self, message: str, cause: Exception = None):
-        self.__message = message
-        self.__cause = cause
-
-    @property
-    def cause(self):
-        return self.__cause
-
-    @property
-    def message(self):
-        return self.__message
-
-
-class AppException(EException):
-    def __init__(self, message: str, cause: Exception = None):
-        super().__init__(message, cause)
-
-
-class PyNetException(EException):
-    def __init__(self, message: str, cause: Exception = None):
-        self.__message = message
-        self.__cause = cause
+import struct
+from typing import List
 
 
 class BitUtilities:
@@ -203,46 +175,3 @@ class BitUtilities:
     @staticmethod
     def bool_length():
         return 1
-
-
-class EList:
-    def __init__(self, data: [] = None):
-        self.__inner = data if data is not None else []
-
-    def append(self, item):
-        self.__inner.append(item)
-
-    def to_list(self):
-        ret = self.__inner.copy()
-        return ret
-
-    def select(self, selector: Callable[[any], any]) -> 'EList':
-        ret = EList()
-        for it in self.__inner:
-            new_it = selector(it)
-            ret.append(new_it)
-        return ret
-
-    def where(self, predicate: Callable[[any], bool]) -> 'EList':
-        ret = EList()
-        for it in self.__inner:
-            if predicate(it):
-                ret.append(it)
-        return ret
-
-    def first_or_none(self, predicate: Callable[[any], bool] = None) -> Optional[any]:
-        ret = None
-        if predicate is not None:
-            for it in self.__inner:
-                if predicate(it):
-                    ret = it
-                    break
-        else:
-            if len(self.__inner) > 0:
-                ret = self.__inner[0]
-        return ret
-
-    @staticmethod
-    def of(items: List) -> 'EList':
-        ret = EList(items)
-        return ret
