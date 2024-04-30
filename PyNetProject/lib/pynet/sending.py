@@ -58,9 +58,9 @@ class Sender:
     def __send_via_port(self, header: str, data_bytes: bytearray):
         sending_socket = _ESocket(self.__host, self.__port)
 
-        header_bytes = BitUtilities.str_to_bytes(header)
-        header_len = BitUtilities.int_to_bytes(len(header_bytes))
-        data_len = BitUtilities.int_to_bytes(len(data_bytes))
+        header_bytes = BitUtilities.Str.value_to_bytes(header)
+        header_len = BitUtilities.Int.value_to_bytes(len(header_bytes))
+        data_len = BitUtilities.Int.value_to_bytes(len(data_bytes))
 
         sending_socket.open()
         sending_socket.send(header_len)

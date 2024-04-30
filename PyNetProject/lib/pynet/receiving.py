@@ -158,8 +158,8 @@ class _ConnectionReaderThread(threading.Thread):
 
         EAssert.is_true(len(key_len_bytes) == 4)
         EAssert.is_true(len(body_len_bytes) == 4)
-        key_len = BitUtilities.bytes_to_int(key_len_bytes)
-        body_len = BitUtilities.bytes_to_int(body_len_bytes)
+        key_len = BitUtilities.Int.bytes_to_value(key_len_bytes)
+        body_len = BitUtilities.Int.bytes_to_value(body_len_bytes)
 
         return key_len, body_len
 

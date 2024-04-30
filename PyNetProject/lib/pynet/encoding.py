@@ -33,33 +33,33 @@ class PyNetEncoderManager:
             lambda q: isinstance(q, str),
             lambda q: re.search("^s\\d+", q),
             lambda q: "s" + str(len(q)),
-            lambda q: BitUtilities.str_to_bytes(q),
+            lambda q: BitUtilities.Str.value_to_bytes(q),
             lambda q: int(q[1:]),
-            lambda q: BitUtilities.bytes_to_str(q)
+            lambda q: BitUtilities.Str.bytes_to_value(q)
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, bool),
             lambda q: q == "b",
             lambda q: "b",
-            lambda q: BitUtilities.bool_to_bytes(q),
-            lambda q: BitUtilities.bool_length(),
-            lambda q: BitUtilities.bytes_to_bool(q)
+            lambda q: BitUtilities.Bool.value_to_bytes(q),
+            lambda q: BitUtilities.Bool.length(),
+            lambda q: BitUtilities.Bool.bytes_to_value(q)
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, int),
             lambda q: q == "i",
             lambda q: "i",
-            lambda q: BitUtilities.int_to_bytes(q),
-            lambda q: BitUtilities.int_length(),
-            lambda q: BitUtilities.bytes_to_int(q)
+            lambda q: BitUtilities.Int.value_to_bytes(q),
+            lambda q: BitUtilities.Int.length(),
+            lambda q: BitUtilities.Int.bytes_to_value(q)
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, float),
             lambda q: q == "d",
             lambda q: "d",
-            lambda q: BitUtilities.float_to_bytes(q),
-            lambda q: BitUtilities.float_length(),
-            lambda q: BitUtilities.bytes_to_float(q)
+            lambda q: BitUtilities.Float.value_to_bytes(q),
+            lambda q: BitUtilities.Float.length(),
+            lambda q: BitUtilities.Float.bytes_to_value(q)
         ),
         _PyNetEncoder(
             lambda q: isinstance(q, bytes),
@@ -72,30 +72,58 @@ class PyNetEncoderManager:
         _PyNetEncoder(
             lambda q: isinstance(q, list) and all(isinstance(d, float) for d in q),
             lambda q: re.search(r"^d\d+", q),
-            lambda q: "d" + str(len(q) * BitUtilities.float_length()),
-            lambda q: BitUtilities.list_to_bytes(q),
+            lambda q: "d" + str(len(q) * BitUtilities.Float.length()),
+            lambda q: BitUtilities.Float1D.value_to_bytes(q),
             lambda q: int(q[1:]),
-            lambda q: BitUtilities.bytes_to_list(q)
+            lambda q: BitUtilities.Float1D.bytes_to_value(q)
         ),
         _PyNetEncoder(
-            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 2,
-            lambda q: re.search(r"^mm\d+", q),
-            lambda q: "mm" + str(
-                np.array(q.shape).prod() * BitUtilities.float_length()
-                + 2 * BitUtilities.int_length()),
-            lambda q: BitUtilities.matrix2d_to_bytes(q),
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 2 and q.dtype == float,
+            lambda q: re.search(r"^md\d+", q),
+            lambda q: "md" + str(
+                np.array(q.shape).prod() * BitUtilities.Float.length()
+                + 2 * BitUtilities.Int.length()),
+            lambda q: BitUtilities.Float2D.value_to_bytes(q),
             lambda q: int(q[2:]),
-            lambda q: BitUtilities.bytes_to_matrix2d(q)
+            lambda q: BitUtilities.Float2D.bytes_to_value(q)
         ),
         _PyNetEncoder(
-            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 3,
-            lambda q: re.search(r"^mmm\d+", q),
-            lambda q: "mmm" + str(
-                np.array(q.shape).prod() * BitUtilities.float_length()
-                + 3 * BitUtilities.int_length()),
-            lambda q: BitUtilities.matrix3d_to_bytes(q),
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 3 and q.dtype == float,
+            lambda q: re.search(r"^mmd\d+", q),
+            lambda q: "mmd" + str(
+                np.array(q.shape).prod() * BitUtilities.Float.length()
+                + 3 * BitUtilities.Int.length()),
+            lambda q: BitUtilities.Float3D.value_to_bytes(q),
             lambda q: int(q[3:]),
-            lambda q: BitUtilities.bytes_to_matrix3d(q)
+            lambda q: BitUtilities.Float3D.bytes_to_value(q)
+        ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, list) and all(isinstance(d, int) for d in q),
+            lambda q: re.search(r"^i\d+", q),
+            lambda q: "i" + str(len(q) * BitUtilities.Int.length()),
+            lambda q: BitUtilities.Int1D.value_to_bytes(q),
+            lambda q: int(q[1:]),
+            lambda q: BitUtilities.Int1D.bytes_to_value(q)
+        ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 2 and q.dtype == int,
+            lambda q: re.search(r"^mi\d+", q),
+            lambda q: "mi" + str(
+                np.array(q.shape).prod() * BitUtilities.Int.length()
+                + 2 * BitUtilities.Int.length()),
+            lambda q: BitUtilities.Int2D.value_to_bytes(q),
+            lambda q: int(q[2:]),
+            lambda q: BitUtilities.Int2D.bytes_to_value(q)
+        ),
+        _PyNetEncoder(
+            lambda q: isinstance(q, np.ndarray) and len(q.shape) == 3 and q.dtype == int,
+            lambda q: re.search(r"^mmi\d+", q),
+            lambda q: "mmi" + str(
+                np.array(q.shape).prod() * BitUtilities.Int.length()
+                + 3 * BitUtilities.Int.length()),
+            lambda q: BitUtilities.Int3D.value_to_bytes(q),
+            lambda q: int(q[3:]),
+            lambda q: BitUtilities.Int3D.bytes_to_value(q)
         )
     ])
 
