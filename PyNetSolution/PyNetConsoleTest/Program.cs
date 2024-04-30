@@ -40,6 +40,41 @@ public static class Program
     ret.Add(() =>
     {
       sourceDict.Clear();
+      sourceDict["ints"] = new int[] { 1, -2 };
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
+      sourceDict["matrix2I"] = new int[][]{
+        new int[]{-1, 2},
+        new int[]{-3, 4},
+        new int[]{-5, 6},
+        };
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
+      sourceDict["matrix3I"] = new int[][][]{
+        new int[][]{
+          new int[]{-1, 2},
+        },
+        new int[][]{
+          new int[]{-3, 4}
+        },
+        new int[][]{
+          new int[]{-5, 6}
+        }
+        };
+      SendDict();
+    });
+
+    ret.Add(() =>
+    {
+      sourceDict.Clear();
       sourceDict["matrix3D"] = new double[][][]{
         new double[][]{
           new double[]{-1.1, 2.2},
@@ -65,7 +100,6 @@ public static class Program
       SendDict();
     });
 
-    //TODO move at the end when tested
     ret.Add(() =>
     {
       sourceDict.Clear();
@@ -195,6 +229,20 @@ public static class Program
       {
         if (Are3DDoubleArraysEqual(dddoubleA, dddoubleB) == false) return false;
       }
+      else if (valA is int[] intA && valB is int[] intB)
+      {
+        if (Enumerable.SequenceEqual(intA, intB) == false) return false;
+      }
+      else if (valA is int[][] iintA && valB is int[][] iintB)
+      {
+        if (iintA.Length != iintB.Length) return false;
+        for (int i = 0; i < iintA.Length; i++)
+          if (Enumerable.SequenceEqual(iintA[i], iintB[i]) == false) return false;
+      }
+      else if (valA is int[][][] iiintA && valB is int[][][] iiintB)
+      {
+        if (Are3DIntArraysEqual(iiintA, iiintB) == false) return false;
+      }
       else
       {
         if (object.Equals(valA, valB) == false) return false;
@@ -202,6 +250,38 @@ public static class Program
     }
 
     return true;
+  }
+
+  private static bool Are3DIntArraysEqual(int[][][] array1, int[][][] array2)
+  {
+    int tolerance = 0;
+    if (array1.Length != array2.Length)
+      return false; // Different lengths in outermost arrays
+
+    for (int i = 0; i < array1.Length; i++)
+    {
+      if (array1[i].Length != array2[i].Length)
+        return false; // Different lengths in the middle arrays
+
+      for (int j = 0; j < array1[i].Length; j++)
+      {
+        if (array1[i][j].Length != array2[i][j].Length)
+          return false; // Different lengths in the innermost arrays
+
+        // Iterate through the innermost arrays
+        for (int k = 0; k < array1[i][j].Length; k++)
+        {
+          int value1 = array1[i][j][k];
+          int value2 = array2[i][j][k];
+
+          // Check if the values are within the specified tolerance
+          if (Math.Abs(value1 - value2) > tolerance)
+            return false; // Values differ
+        }
+      }
+    }
+
+    return true; // All elements are equal within the tolerance
   }
 
   private static bool Are3DDoubleArraysEqual(double[][][] array1, double[][][] array2)

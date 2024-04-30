@@ -80,8 +80,8 @@ namespace PyNet.Encoding
 
       internal static PyNetEncoder<double[][]> Matrix2DEncoder = new(
         q => q is double[][],
-        q => Regex.IsMatch(q, "^mm\\d+"),
-        q => $"mm{q.Length * q[0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength}",
+        q => Regex.IsMatch(q, "^md\\d+"),
+        q => $"md{q.Length * q[0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength}",
         q =>
         {
           byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
@@ -124,8 +124,8 @@ namespace PyNet.Encoding
 
       internal static PyNetEncoder<double[][][]> Matrix3DEncoder = new(
         q => q is double[][][],
-        q => Regex.IsMatch(q, "^mmm\\d+"),
-        q => $"mmm{q.Length * q[0].Length * q[0][0].Length * BitUtilities.Double.ByteLength + 2 * BitUtilities.Int.ByteLength}",
+        q => Regex.IsMatch(q, "^mmd\\d+"),
+        q => $"mmd{q.Length * q[0].Length * q[0][0].Length * BitUtilities.Double.ByteLength + 3 * BitUtilities.Int.ByteLength}",
         q =>
         {
           byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
@@ -168,6 +168,115 @@ namespace PyNet.Encoding
               double[] part = Enumerable
                 .Range(0, tmp.Length / sizeof(double))
                 .Select(offset => BitConverter.ToDouble(tmp, offset * sizeof(double)))
+                .ToArray();
+              ret[i][j] = part;
+            }
+          }
+
+          return ret;
+        }
+        );
+
+      internal static PyNetEncoder<int[]> IntArrayEncoder = new(
+        q => q is int[],
+        q => Regex.IsMatch(q, "^i\\d+"),
+        q => $"i{q.Length * BitUtilities.Int.ByteLength}",
+        q => q.SelectMany(d => BitUtilities.Int.ToBytes(d)).ToArray(),
+        q => int.Parse(q[1..]),
+        q => Enumerable
+          .Range(0, q.Length / sizeof(int))
+          .Select(offset => BitConverter.ToInt32(q, offset * sizeof(int)))
+          .ToArray()
+        );
+
+      internal static PyNetEncoder<int[][]> Matrix2IEncoder = new(
+        q => q is int[][],
+        q => Regex.IsMatch(q, "^mi\\d+"),
+        q => $"mi{q.Length * q[0].Length * BitUtilities.Int.ByteLength + 2 * BitUtilities.Int.ByteLength}",
+        q =>
+        {
+          byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
+          byte[] dimB = BitUtilities.Int.ToBytes(q[0].Length);
+          List<byte[]> rows = q.SelectMany(d => d.Select(p => BitUtilities.Int.ToBytes(p)).ToList()).ToList();
+          byte[] ret = dimA.Concat(dimB).ToArray();
+          rows.ForEach(q => ret = ret.Concat(q).ToArray());
+          return ret;
+        },
+        q => int.Parse(q[2..]),
+        q =>
+        {
+          int[][] ret;
+          byte[] tmp;
+
+          int INT_LEN = BitUtilities.Int.ByteLength;
+
+          tmp = q[0..INT_LEN];
+          int dimA = BitUtilities.Int.FromBytes(tmp);
+          tmp = q[INT_LEN..(2 * INT_LEN)];
+          int dimB = BitUtilities.Int.FromBytes(tmp);
+
+          ret = new int[dimA][];
+          int BLCK_LEN = dimB * INT_LEN;
+          tmp = new byte[BLCK_LEN];
+          for (int i = 0; i < dimA; i++)
+          {
+            System.Buffer.BlockCopy(q, 2 * INT_LEN + i * BLCK_LEN, tmp, 0, BLCK_LEN);
+            int[] part = Enumerable
+              .Range(0, tmp.Length / sizeof(int))
+              .Select(offset => BitConverter.ToInt32(tmp, offset * sizeof(int)))
+              .ToArray();
+            ret[i] = part;
+          }
+
+          return ret;
+        }
+        );
+
+      internal static PyNetEncoder<int[][][]> Matrix3IEncoder = new(
+        q => q is int[][][],
+        q => Regex.IsMatch(q, "^mmi\\d+"),
+        q => $"mmi{q.Length * q[0].Length * q[0][0].Length * BitUtilities.Int.ByteLength + 3 * BitUtilities.Int.ByteLength}",
+        q =>
+        {
+          byte[] dimA = BitUtilities.Int.ToBytes(q.Length);
+          byte[] dimB = BitUtilities.Int.ToBytes(q[0].Length);
+          byte[] dimC = BitUtilities.Int.ToBytes(q[0][0].Length);
+          List<byte[]> rows = new();
+          for (int i = 0; i < q.Length; i++)
+            for (int j = 0; j < q[0].Length; j++)
+              rows.Add(q[i][j].SelectMany(q => BitUtilities.Int.ToBytes(q)).ToArray());
+
+          byte[] ret = dimA.Concat(dimB).Concat(dimC).ToArray();
+          rows.ForEach(q => ret = ret.Concat(q).ToArray());
+          return ret;
+        },
+        q => int.Parse(q[3..]),
+        q =>
+        {
+          int[][][] ret;
+          byte[] tmp;
+
+          int INT_LEN = BitUtilities.Int.ByteLength;
+
+          tmp = q[0..INT_LEN];
+          int dimA = BitUtilities.Int.FromBytes(tmp);
+          tmp = q[INT_LEN..(2 * INT_LEN)];
+          int dimB = BitUtilities.Int.FromBytes(tmp);
+          tmp = q[(2 * INT_LEN)..(3 * INT_LEN)];
+          int dimC = BitUtilities.Int.FromBytes(tmp);
+
+          ret = new int[dimA][][];
+          int BLCK_LEN = dimC * INT_LEN;
+          tmp = new byte[BLCK_LEN];
+          for (int i = 0; i < dimA; i++)
+          {
+            ret[i] = new int[dimB][];
+            for (int j = 0; j < dimB; j++)
+            {
+              System.Buffer.BlockCopy(q, 3 * INT_LEN + ((i * dimB) + j) * BLCK_LEN, tmp, 0, BLCK_LEN);
+              int[] part = Enumerable
+                .Range(0, tmp.Length / sizeof(int))
+                .Select(offset => BitConverter.ToInt32(tmp, offset * sizeof(int)))
                 .ToArray();
               ret[i][j] = part;
             }
